@@ -6,6 +6,7 @@ name = "DotCraft Bridge"
 tagline = "Let DotCraft inspect and drive this Blender session"
 maintainer = "DotHarness <https://github.com/DotHarness>"
 type = "add-on"
+website = "https://github.com/DotHarness/dotcraft-blender"
 license = ["SPDX:GPL-2.0-or-later"]
 blender_version_min = "4.2.0"
 tags = ["Development", "Pipeline"]
