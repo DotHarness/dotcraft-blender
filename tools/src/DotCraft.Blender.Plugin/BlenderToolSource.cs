@@ -42,7 +42,7 @@ internal sealed class BlenderToolSource(BlenderAttachService service) : AIFuncti
 internal sealed class BlenderTools(BlenderAttachService service, bool planMode)
 {
     [GeneratedTool(Name = "list")]
-    [Description("List Blender sessions that are listening for DotCraft, plus the Blender installations on this machine.")]
+    [Description("List Blender sessions listening for DotCraft, and the installations on this machine.")]
     public ValueTask<ToolExecutionResult> List(CancellationToken cancellationToken = default) =>
         Guard(() => Task.FromResult(new JsonObject
         {
@@ -51,15 +51,15 @@ internal sealed class BlenderTools(BlenderAttachService service, bool planMode)
         }));
 
     [GeneratedTool(Name = "connect")]
-    [Description("Bind this task to a Blender session. Omit pid to take the newest one; set launch to start Blender when none is listening. A session that is still starting comes back as state 'starting' — call this again to attach to that same process.")]
+    [Description("Connect this task to a Blender session by pid, or omit pid to take the newest one.")]
     public ValueTask<ToolExecutionResult> Connect(
         ToolInvocationContext context,
         [Range(1, int.MaxValue)]
-        [Description("Process id from blender.list. Omit it to take the newest listening session.")] int? pid = null,
+        [Description("Process id from blender.list; omit for the newest session.")] int? pid = null,
         [Description("Start Blender when no session is listening.")] bool launch = false,
-        [Description("A .blend to open when launching. Omit it for an empty scene.")] string? blendFile = null,
+        [Description("A .blend to open when launching.")] string? blendFile = null,
         [Range(1, 120)]
-        [Description("Seconds to wait for a launching session before reporting it as still starting.")] int waitSeconds = 20,
+        [Description("Seconds to wait before reporting the session as still starting.")] int waitSeconds = 20,
         CancellationToken cancellationToken = default) =>
         planMode
             ? ValueTask.FromResult(ModeDenied())
@@ -72,7 +72,7 @@ internal sealed class BlenderTools(BlenderAttachService service, bool planMode)
                 cancellationToken));
 
     [GeneratedTool(Name = "status")]
-    [Description("Read the connected session: file, scene, mode, selection, data counts, and running jobs.")]
+    [Description("Read the connected session's file, scene, mode, selection and running jobs.")]
     public ValueTask<ToolExecutionResult> Status(
         ToolInvocationContext context,
         CancellationToken cancellationToken = default) =>
@@ -82,7 +82,7 @@ internal sealed class BlenderTools(BlenderAttachService service, bool planMode)
     [Description("Read the scene graph, or one object in detail when a name is given.")]
     public ValueTask<ToolExecutionResult> Scene(
         ToolInvocationContext context,
-        [Description("An object name. Omit it for the whole scene.")] string? name = null,
+        [Description("An object name; omit for the whole scene.")] string? name = null,
         [Description("Include collections, materials and world state.")] bool full = false,
         CancellationToken cancellationToken = default) =>
         Guard(() => name is null
@@ -98,10 +98,10 @@ internal sealed class BlenderTools(BlenderAttachService service, bool planMode)
                 cancellationToken));
 
     [GeneratedTool(Name = "execute")]
-    [Description("Run Python inside the connected Blender on its main thread. `bpy` and the `dc` helpers are in scope; call dc.api(path) to read the running version's real signature instead of guessing, and dc.result(value) to return structured data. Long renders belong in blender.render, not here.")]
+    [Description("Execute Python on the connected Blender's main thread. `bpy` and the `dc` helpers are in scope.")]
     public ValueTask<ToolExecutionResult> Execute(
         ToolInvocationContext context,
-        [Description("Python source. It runs as a module body, so top-level statements are fine and `return` is not.")] string code,
+        [Description("Python source, run as a module body.")] string code,
         CancellationToken cancellationToken = default) =>
         planMode
             ? ValueTask.FromResult(ModeDenied())
@@ -112,27 +112,33 @@ internal sealed class BlenderTools(BlenderAttachService service, bool planMode)
                 cancellationToken));
 
     [GeneratedTool(Name = "view")]
-    [Description("Capture the connected session's 3D viewport as an image. Use it before and after changes; a text dump of the scene does not show what the render will look like.")]
+    [Description("Return an image of the viewport, or of a rendered file when a path is given.")]
     public ValueTask<ToolExecutionResult> View(
         ToolInvocationContext context,
+        [Description("An image file to read back; omit it to capture the viewport.")] string? filepath = null,
         [Range(64, 2048)]
         [Description("Longest edge of the returned image.")] int maxSize = 800,
-        CancellationToken cancellationToken = default) =>
-        GuardImage(() => service.CallAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var parameters = new JsonObject { ["maxSize"] = maxSize };
+        if (filepath is not null)
+            parameters["filepath"] = filepath;
+        return GuardImage(() => service.CallAsync(
             context.ThreadId,
-            "view",
-            new JsonObject { ["maxSize"] = maxSize },
+            filepath is null ? "view" : "image",
+            parameters,
             cancellationToken));
+    }
 
     [GeneratedTool(Name = "render")]
-    [Description("Start a render and return a job id. The render runs through Blender's own modal path, so this call does not block the session; poll it with blender.job.")]
+    [Description("Start a render and return a job id; it does not block the session.")]
     public ValueTask<ToolExecutionResult> Render(
         ToolInvocationContext context,
-        [Description("Render engine identifier. Omit it to keep the scene's engine; blender.scene reports the current one and an invalid value lists what this Blender supports.")] string? engine = null,
+        [Description("Render engine identifier; omit to keep the scene's engine.")] string? engine = null,
         [Range(16, 16384)] [Description("Output width in pixels.")] int? width = null,
         [Range(16, 16384)] [Description("Output height in pixels.")] int? height = null,
-        [Description("Frame to render. Omit it for the current frame.")] int? frame = null,
-        [Description("Output path. Omit it for a temporary file that blender.job reports back.")] string? filepath = null,
+        [Description("Frame to render; omit for the current frame.")] int? frame = null,
+        [Description("Output path; its extension picks the format.")] string? filepath = null,
         CancellationToken cancellationToken = default)
     {
         if (planMode) return ValueTask.FromResult(ModeDenied());
@@ -162,7 +168,7 @@ internal sealed class BlenderTools(BlenderAttachService service, bool planMode)
     }
 
     [GeneratedTool(Name = "disconnect")]
-    [Description("Release this task's Blender session. It does not close Blender.")]
+    [Description("Disconnect this task from its Blender session; it does not close Blender.")]
     public ValueTask<ToolExecutionResult> Disconnect(
         ToolInvocationContext context,
         CancellationToken cancellationToken = default) =>
