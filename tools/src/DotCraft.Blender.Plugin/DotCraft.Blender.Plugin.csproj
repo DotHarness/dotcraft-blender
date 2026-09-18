@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>DotCraft.Blender</AssemblyName>
+    <RootNamespace>DotCraft.Blender</RootNamespace>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../DotCraft.Blender.Attach/DotCraft.Blender.Attach.csproj" />
+    <PackageReference Include="DotCraft.Harness" Version="0.6.9" PrivateAssets="all" ExcludeAssets="runtime" />
+  </ItemGroup>
+</Project>
