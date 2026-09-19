@@ -30,7 +30,7 @@ $entry = [pscustomobject]@{
     name     = 'blender'
     source   = @{ source = 'local'; path = './plugins/blender' }
     policy   = @{ installation = 'AVAILABLE'; authentication = 'ON_INSTALL' }
-    category = 'Engineering'
+    category = 'Design'
 }
 $index.plugins = @($index.plugins | Where-Object name -cne 'blender') + $entry
 $index | ConvertTo-Json -Depth 30 | Set-Content $indexPath -Encoding utf8NoBOM
