@@ -26,13 +26,16 @@ Copy-Item -LiteralPath (Join-Path $ArtifactDirectory 'release-manifest.json') -D
 
 $indexPath = Join-Path $root '.craft/plugins/marketplace.json'
 $index = Get-Content $indexPath -Raw | ConvertFrom-Json
-$entry = [pscustomobject]@{
+$entry = [pscustomobject][ordered]@{
     name     = 'blender'
-    source   = @{ source = 'local'; path = './plugins/blender' }
-    policy   = @{ installation = 'AVAILABLE'; authentication = 'ON_INSTALL' }
+    source   = [ordered]@{ source = 'local'; path = './plugins/blender' }
+    policy   = [ordered]@{ installation = 'AVAILABLE'; authentication = 'ON_INSTALL' }
     category = 'Design'
 }
-$index.plugins = @($index.plugins | Where-Object name -cne 'blender') + $entry
+$plugins = @($index.plugins)
+$position = [Array]::FindIndex($plugins, [Predicate[object]]{ param($plugin) $plugin.name -ceq 'blender' })
+if ($position -ge 0) { $plugins[$position] = $entry } else { $plugins += $entry }
+$index.plugins = $plugins
 $index | ConvertTo-Json -Depth 30 | Set-Content $indexPath -Encoding utf8NoBOM
 
 & node "$root/scripts/validate-registry.mjs"
