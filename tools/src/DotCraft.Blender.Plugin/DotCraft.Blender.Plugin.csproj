@@ -9,6 +9,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../DotCraft.Blender.Attach/DotCraft.Blender.Attach.csproj" />
-    <PackageReference Include="DotCraft.Harness" Version="0.6.9" PrivateAssets="all" ExcludeAssets="runtime" />
+    <PackageReference Include="DotCraft.Harness" Version="0.8.6" PrivateAssets="all" ExcludeAssets="runtime" />
   </ItemGroup>
 </Project>
